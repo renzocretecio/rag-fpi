@@ -13,7 +13,7 @@
 ## Backend
 - Node.js
 - Express
-- Java Spring Boot
+- FastAPI
 
 ## Tools and Automation
 - n8n
