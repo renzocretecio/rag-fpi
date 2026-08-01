@@ -1,0 +1,12 @@
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+httpx==0.28.1
+supabase==2.13.0
+asyncpg==0.30.0
+psycopg[binary]==3.2.3
+ollama==0.4.7
+orjson==3.10.12
+pgvector==0.5.0
