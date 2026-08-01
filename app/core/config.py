@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     UPSTASH_REDIS_REST_URL: str
     UPSTASH_REDIS_REST_TOKEN: str
 
+    ALLOWED_ORIGINS="http://localhost:3000,https://creteciorenzo.vercel.app"
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
