@@ -10,3 +10,4 @@ psycopg[binary]==3.2.3
 ollama==0.4.7
 orjson==3.10.12
 pgvector==0.5.0
+upstash-ratelimit>=1.0.0
