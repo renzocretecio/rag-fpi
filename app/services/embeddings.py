@@ -13,8 +13,14 @@ class EmbeddingServiceError(Exception):
 
 class EmbeddingService:
     def __init__(self) -> None:
-        self.base_url = settings.OLLAMA_URL.rstrip("/")
-        self.model = settings.OLLAMA_EMBED_MODEL
+        self.model = settings.HF_EMBEDDING_MODEL
+        self.api_url = f"https://router.huggingface.co/hf-inference/models/{self.model}/pipeline/feature-extraction"
+        
+        token = settings.HF_TOKEN.strip().strip("'\"") if settings.HF_TOKEN else ""
+        self.headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
 
     def embed_text_sync(self, text: str) -> list[float]:
         vectors = self.embed_batch_sync([text])
@@ -24,25 +30,29 @@ class EmbeddingService:
         if not texts:
             return []
 
-        url = f"{self.base_url}/api/embed"
         payload = {
-            "model": self.model,
-            "input": list(texts),
+            "inputs": list(texts),
+            "options": {
+                "wait_for_model": True
+            },
         }
 
         try:
-            with httpx.Client(timeout=60.0) as client:
-                response = client.post(url, json=payload)
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(
+                    self.api_url,
+                    headers=self.headers,
+                    json=payload,
+                )
                 response.raise_for_status()
-                data: dict[str, Any] = response.json()
+                data: Any = response.json()
         except httpx.HTTPError as exc:
-            raise EmbeddingServiceError(f"Ollama embedding request failed: {exc}") from exc
+            raise EmbeddingServiceError(f"Hugging Face embedding request failed: {exc}") from exc
 
-        embeddings = data.get("embeddings")
-        if not isinstance(embeddings, list):
-            raise EmbeddingServiceError("Invalid embedding response from Ollama")
+        if isinstance(data, list) and all(isinstance(v, list) for v in data):
+            return data
 
-        return embeddings
+        raise EmbeddingServiceError(f"Invalid embedding response structure: {data}")
 
 
 embedding_service = EmbeddingService()

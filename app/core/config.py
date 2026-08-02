@@ -23,7 +23,8 @@ class Settings(BaseSettings):
     OLLAMA_URL: str = "http://localhost:11434"
     OLLAMA_EMBED_MODEL: str = "all-minilm:l6-v2"
 
-    ALLOWED_ORIGINS: str = "http://localhost:3000"
+    HF_TOKEN: str
+    HF_EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     GROQ_URL: str = "https://api.groq.com/openai/v1"
     GROQ_API_KEY: str
@@ -33,7 +34,7 @@ class Settings(BaseSettings):
     UPSTASH_REDIS_REST_URL: str
     UPSTASH_REDIS_REST_TOKEN: str
 
-    ALLOWED_ORIGINS="http://localhost:3000,https://creteciorenzo.vercel.app"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,https://creteciorenzo.vercel.app"
 
 @lru_cache
 def get_settings() -> Settings:
