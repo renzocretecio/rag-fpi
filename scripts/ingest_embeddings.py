@@ -5,8 +5,10 @@ from typing import Any
 
 import asyncpg
 import httpx
+from pgvector.asyncpg import register_vector
 
 from app.core.config import settings
+from app.db.postgres import is_pooled_connection
 
 
 BATCH_SIZE = 100
@@ -58,7 +60,14 @@ async def update_embeddings(
 
 
 async def main() -> None:
-    conn = await asyncpg.connect(dsn=settings.DATABASE_URL)
+    connect_kwargs: dict[str, Any] = {}
+    if is_pooled_connection(settings.DATABASE_URL):
+        # PgBouncer runs in transaction mode on pooled endpoints (Neon
+        # `-pooler`), so asyncpg's server-side statement cache must be off.
+        connect_kwargs["statement_cache_size"] = 0
+
+    conn = await asyncpg.connect(dsn=settings.DATABASE_URL, **connect_kwargs)
+    await register_vector(conn)
     total = 0
     try:
         while True:

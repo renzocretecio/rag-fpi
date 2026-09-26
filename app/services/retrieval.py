@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any
 
 import asyncpg
+from pgvector.asyncpg import register_vector
 
 from app.core.config import settings
+from app.db.postgres import is_pooled_connection
 
 
 @dataclass
@@ -22,7 +25,7 @@ class RetrievalServiceError(Exception):
 
 class RetrievalService:
     def __init__(self) -> None:
-        self.database_url = settings.SUPABASE_URL
+        self.database_url = settings.DATABASE_URL
 
     async def match_chunks(
         self,
@@ -40,8 +43,22 @@ class RetrievalService:
             limit $2;
         """
 
+        connect_kwargs: dict[str, Any] = {}
+        if is_pooled_connection(self.database_url):
+            # PgBouncer runs in transaction mode on pooled endpoints (Neon
+            # `-pooler`), so asyncpg's server-side statement cache must be off.
+            connect_kwargs["statement_cache_size"] = 0
+
         try:
-            conn = await asyncpg.connect(self.database_url)
+            conn = await asyncpg.connect(self.database_url, **connect_kwargs)
+            await register_vector(conn)
+            # asyncpg returns json/jsonb as text unless a codec is registered.
+            await conn.set_type_codec(
+                "jsonb",
+                encoder=json.dumps,
+                decoder=json.loads,
+                schema="pg_catalog",
+            )
             rows = await conn.fetch(sql, query_embedding, match_count)
             await conn.close()
         except Exception as exc:

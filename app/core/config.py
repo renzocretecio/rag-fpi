@@ -13,11 +13,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "case-study-api"
     API_V1_STR: str = "/api/v1"
 
-    SUPABASE_URL: str
-    SUPABASE_PUBLISHABLE_KEY: str | None = None
-    SUPABASE_SECRET_KEY: str
-    SUPABASE_JWKS_URL: str | None = None
-
+    # Postgres connection string (Neon). Use the direct (non-pooler) endpoint:
+    # the app keeps one long-lived connection and relies on session state
+    # (`SET search_path`), which a PgBouncer transaction-mode pool drops.
     DATABASE_URL: str
 
     OLLAMA_URL: str = "http://localhost:11434"
@@ -28,8 +26,10 @@ class Settings(BaseSettings):
 
     GROQ_URL: str = "https://api.groq.com/openai/v1"
     GROQ_API_KEY: str
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
-    GROQ_FALLBACK_MODEL: str = "llama-3.1-8b-instant"
+    # Groq retires models periodically; a retired model returns HTTP 404
+    # ("model_not_found"). Check `GET /openai/v1/models` if answers stop working.
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_FALLBACK_MODEL: str = "openai/gpt-oss-20b"
 
     UPSTASH_REDIS_REST_URL: str
     UPSTASH_REDIS_REST_TOKEN: str

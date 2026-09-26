@@ -7,7 +7,7 @@ from app.schemas.response import QueryResponse, AskResponse, RetrievedChunkOut
 from app.services.embeddings import EmbeddingServiceError, embedding_service
 from app.services.llm import LLMServiceError, llm_service
 
-from app.core.ratelimit import ratelimit
+from app.core.ratelimit import is_allowed
 
 router = APIRouter()
 
@@ -79,8 +79,7 @@ def ask(payload: QueryRequest):
 @router.post("/ask/stream")
 def ask_stream(payload: QueryRequest, request: Request):
     identifier = request.client.host if request.client else "unknown"
-    result = ratelimit.limit(identifier)
-    if not result.allowed:
+    if not is_allowed(identifier):
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
 
     try:
